@@ -1,38 +1,50 @@
+/* App.css */
+
 .App {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
+/* Make the header transparent and remove extra styling */
 .App-header {
-  background-color: #f8346f;
-  min-height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: transparent;  /* Makes header transparent */
+  box-shadow: none;         /* Remove any shadow if present */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Optional: a light border */
 }
 
-.App-link {
-  color: #61dafb;
+/* Style the logo area */
+.logo {
+  display: flex;
+  align-items: center;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.logo img {
+  height: 50px;       /* Adjust size as needed */
+  margin-right: 1rem; /* Space between logo and text */
+}
+
+.logo h1 {
+  font-size: 1.5rem;  /* Adjust font size as needed */
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  color: inherit;     /* Inherit text color from header */
+}
+
+/* Position the theme bar (if it's not already fixed) */
+.theme-bar {
+  position: fixed;
+  right: 0;
+  top: 20%;
+  z-index: 1000; /* Ensure it appears on top */
+}
+
+/* Optional global button styling */
+button {
+  background-color: inherit; /* Allow theme buttons to use theme color via styled-components */
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
 }

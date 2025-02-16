@@ -3,57 +3,94 @@ import React from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import styled from 'styled-components';
 
 // Drag-and-drop support from react-big-calendar
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 // We'll use react-dnd for our custom drop target:
 import { useDrop } from 'react-dnd';
-
+const localizer = momentLocalizer(moment)
 // --- CUSTOMIZATION OPTIONS ---
 
 // 1. Custom Event Styling
 const eventStyleGetter = (event, start, end, isSelected) => {
-  const backgroundColor = event.color || '#3174ad';
   const style = {
-    backgroundColor,
+    backgroundColor: event.color || (props => props.theme.primaryColor),
     borderRadius: '4px',
     opacity: 0.8,
     color: 'white',
     border: 'none',
-    display: 'block',
+    display: 'block'
   };
   return { style };
 };
 
-// 2. Custom Event Rendering
-const CustomEvent = ({ event }) => (
-  <span>
-    <strong>{event.title}</strong>
-    {event.desc ? `: ${event.desc}` : ''}
-  </span>
-);
+const EventContainer = styled.div`
+  position: relative;
+  padding: 0.5rem;
+  cursor: pointer;
+`;
+
+const DeleteButton = styled.button`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: transparent;
+  border: none;
+  color: red;
+  font-weight: bold;
+  cursor: pointer;
+`;
+
+const CustomEvent = ({ event, onDeleteEvent }) => {
+  return (
+    <EventContainer>
+      <div>{event.title}</div>
+      <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteEvent(event.id); }}>
+        X
+      </DeleteButton>
+    </EventContainer>
+  );
+};
+
+
 
 // 3. Custom Toolbar Component
+
+const ToolbarContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: ${(props) => props.theme.primaryColor};
+  color: #fff;
+`;
+
+const ToolbarButton = styled.button`
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  margin: 0 0.5rem;
+  cursor: pointer;
+`;
+
 const CustomToolbar = (toolbar) => {
   const goToBack = () => toolbar.onNavigate('PREV');
   const goToNext = () => toolbar.onNavigate('NEXT');
   const label = () => {
     const date = toolbar.date;
-    return (
-      <span>
-        {date.toLocaleString('default', { month: 'long' })} {date.getFullYear()}
-      </span>
-    );
+    return `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
   };
 
   return (
-    <div className="rbc-toolbar" style={{ marginBottom: '1rem' }}>
-      <button onClick={goToBack}>Back</button>
-      <span style={{ margin: '0 1rem' }}>{label()}</span>
-      <button onClick={goToNext}>Next</button>
-    </div>
+    <ToolbarContainer>
+      <ToolbarButton onClick={goToBack}>Back</ToolbarButton>
+      <span>{label()}</span>
+      <ToolbarButton onClick={goToNext}>Next</ToolbarButton>
+    </ToolbarContainer>
   );
 };
+
 
 // 4. Custom Formats for Date/Time Display
 const formats = {
@@ -116,14 +153,12 @@ const DragAndDropCalendar = withDragAndDrop(Calendar);
 // --- INTEGRATED CALENDAR COMPONENT ---
 const MyCalendar = ({
   events,
-  setEvents,
-  onDropOnCalendar,
   onEventDrop,
   onEventResize,
   onSelectSlot,
+  onDeleteEvent,
+  onDropOnCalendar, // for external drops if needed
 }) => {
-  const localizer = momentLocalizer(moment);
-
   return (
     <div style={{ height: '800px' }}>
       <DragAndDropCalendar
@@ -133,15 +168,37 @@ const MyCalendar = ({
         endAccessor="end"
         defaultView="week"
         selectable
-        onSelectSlot={onSelectSlot} // For creating new events via selection
-        onEventDrop={onEventDrop}   // Handle internal drag-and-drop updates
         resizable
-        onEventResize={onEventResize} // Handle event resizing
+        onEventDrop={onEventDrop}       // Handler for moving events
+        onEventResize={onEventResize}   // Handler for resizing events
+        onSelectSlot={onSelectSlot}     // Handler for adding events by slot selection
         eventPropGetter={eventStyleGetter}
         components={{
-          event: CustomEvent,
           toolbar: CustomToolbar,
-          // Use our custom timeSlotWrapper to enable external drops
+          event: (props) => (
+            // Wrap your custom event to include a delete button, etc.
+            <div style={{ position: 'relative', paddingRight: '20px' }}>
+              <span>{props.event.title}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteEvent(props.event.id);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'red',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                X
+              </button>
+            </div>
+          ),
           timeSlotWrapper: (props) => (
             <CustomTimeSlotWrapper {...props} onDropOnCalendar={onDropOnCalendar} />
           ),
@@ -149,7 +206,6 @@ const MyCalendar = ({
         formats={formats}
         messages={messages}
         dayPropGetter={dayPropGetter}
-        views={['month', 'week', 'day', 'agenda']}
       />
     </div>
   );

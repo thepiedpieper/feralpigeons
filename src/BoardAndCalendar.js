@@ -1,10 +1,10 @@
-// BoardAndCalendar.js
 import React, { useState, useEffect } from 'react';
 import MyCalendar from './MyCalendar';
 import KanbanBoard from './KanbanBoard';
-import EventForm from './EventForm';
+import Dashboard from './Dashboard';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import SplitPane from 'react-split-pane';
 
 const initialEvents = [
   {
@@ -19,14 +19,12 @@ const initialEvents = [
   },
 ];
 
-// Helper: Convert stored date strings back to Date objects.
-const parseEvents = (events) => {
-  return events.map((event) => ({
+const parseEvents = (events) =>
+  events.map(event => ({
     ...event,
     start: new Date(event.start),
     end: new Date(event.end),
   }));
-};
 
 const BoardAndCalendar = () => {
   const [events, setEvents] = useState(() => {
@@ -47,34 +45,39 @@ const BoardAndCalendar = () => {
     localStorage.setItem('myEvents', JSON.stringify(events));
   }, [events]);
 
-  const addEvent = (newEvent) => {
-    setEvents([...events, newEvent]);
+  // Function to update a specific card/event
+  const updateCard = (cardId, updates) => {
+    const updatedEvents = events.map(e => e.id === cardId ? { ...e, ...updates } : e);
+    setEvents(updatedEvents);
+  };
+
+  // Function to delete an event
+  const handleDeleteEvent = (eventId) => {
+    const updatedEvents = events.filter(e => e.id !== eventId);
+    setEvents(updatedEvents);
   };
 
   const handleDropOnCalendar = (item, dropDate) => {
-    if (item.isTask) {
-      // Create a new event from the checklist task
-      const newEvent = {
-        id: Date.now(),
-        title: item.text, // use the checklist item's text as the event title
-        start: dropDate,
-        end: new Date(dropDate.getTime() + 60 * 60 * 1000), // e.g., a default 1-hour block
-        color: '#ff7f50',
-        desc: '',
-        status: 'inCalendar',
-        category: 'planner',
-      };
-      setEvents([...events, newEvent]);
-      // Optionally: Remove the checklist item from the originating card.
-      // You can use updateCard here to remove that item from its card.
-    } else {
-      // Handle as before if it’s a full event being moved.
+    if (!item.isTask) {
       const updatedEvents = events.map((e) =>
         e.id === (item.card ? item.card.id : item.id)
           ? { ...e, start: dropDate, end: new Date(dropDate.getTime() + 60 * 60 * 1000), status: 'inCalendar' }
           : e
       );
       setEvents(updatedEvents);
+    } else {
+      const newEvent = {
+        id: Date.now(),
+        title: item.text,
+        start: dropDate,
+        end: new Date(dropDate.getTime() + 60 * 60 * 1000),
+        color: '#ff7f50',
+        desc: '',
+        status: 'inCalendar',
+        category: 'planner',
+      };
+      setEvents([...events, newEvent]);
+      // Optionally remove the task from its originating card
     }
   };
 
@@ -92,13 +95,6 @@ const BoardAndCalendar = () => {
     setEvents(updatedEvents);
   };
 
-  const updateCard = (cardId, updates) => {
-    const updatedEvents = events.map(e =>
-      e.id === cardId ? { ...e, ...updates } : e
-    );
-    setEvents(updatedEvents);
-  };
-  
   const handleSelectSlot = (slotInfo) => {
     const newEvent = {
       id: Date.now(),
@@ -107,7 +103,7 @@ const BoardAndCalendar = () => {
       end: slotInfo.end,
       color: '#3788d8',
       desc: 'Created via selection',
-      status: 'inCalendar',
+      status: 'todo',
       category: 'planner',
     };
     setEvents([...events, newEvent]);
@@ -115,28 +111,37 @@ const BoardAndCalendar = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div style={{ padding: '1rem' }}>
-        <h2>Add a New Event</h2>
-        <EventForm addEvent={addEvent} />
-      </div>
-      <div style={{ display: 'flex', gap: '2rem' }}>
-        <div style={{ flex: 1 }}>
-          <MyCalendar
-            events={events}
-            setEvents={setEvents}
-            onDropOnCalendar={handleDropOnCalendar}
-            onEventDrop={handleEventDrop}
-            onEventResize={handleEventResize}
-            onSelectSlot={handleSelectSlot}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <KanbanBoard events={events} setEvents={setEvents} updateCard={updateCard}  />
-        </div>
+      <div style={{ height: '100vh' }}>
+        <Dashboard events={events} onDeleteEvent={handleDeleteEvent} />
+        <SplitPane 
+          split="vertical" 
+          minSize={300} 
+          defaultSize="50%"
+          style={{ height: 'calc(100vh - 150px)' }}
+        >
+          <div style={{ padding: '1rem', overflow: 'auto' }}>
+            <MyCalendar
+              events={events}
+              setEvents={setEvents}
+              onDropOnCalendar={handleDropOnCalendar}
+              onEventDrop={handleEventDrop}
+              onEventResize={handleEventResize}
+              onSelectSlot={handleSelectSlot}
+              onDeleteEvent={handleDeleteEvent}  // Pass deletion handler to calendar events
+            />
+          </div>
+          <div style={{ padding: '1rem', overflow: 'auto' }}>
+            <KanbanBoard 
+              events={events} 
+              setEvents={setEvents} 
+              updateCard={updateCard}
+              onDeleteEvent={handleDeleteEvent}  // Pass deletion handler to Kanban board cards
+            />
+          </div>
+        </SplitPane>
       </div>
     </DndProvider>
   );
 };
-
 
 export default BoardAndCalendar;

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import ChecklistItem from './ChecklistItem';
-
+import styled from 'styled-components';
 
 
 export const ItemTypes = {
@@ -10,7 +10,34 @@ export const ItemTypes = {
   TASK: 'TASK',
 };
 
-const KanbanCard = ({ card, index, moveCard, updateCard }) => {
+
+const CardContainer = styled.div`
+  padding: 1rem;
+  margin: 0 0 1rem 0;
+  background: ${(props) => props.theme.eventBackground || '#fff'};
+  border: 1px solid ${(props) => props.theme.secondaryColor};
+  border-radius: 4px;
+  cursor: move;
+  position: relative;
+  opacity: ${(props) => (props.isDragging ? 0.5 : 1)};
+  color: ${(props) => props.theme.textColor};
+`;
+
+const DeleteButton = styled.button`
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: transparent;
+  border: none;
+  color: red;
+  font-weight: bold;
+  cursor: pointer;
+`;
+
+
+
+const KanbanCard = ({ card, index, moveCard, updateCard, onDeleteEvent }) => {
+  // Setup drag hook
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.EVENT,
     item: { id: card.id, index, column: card.status, card },
@@ -19,8 +46,9 @@ const KanbanCard = ({ card, index, moveCard, updateCard }) => {
     }),
   });
 
+  // Setup drop hook for reordering within the column
   const [, drop] = useDrop({
-    accept: ItemTypes.EVENT, // Ensure this is defined
+    accept: ItemTypes.EVENT,
     hover(item, monitor) {
       if (item.id === card.id) return;
       // Reorder within the same column if applicable
@@ -30,7 +58,6 @@ const KanbanCard = ({ card, index, moveCard, updateCard }) => {
       }
     },
   });
-
 
   // Local state for new checklist items
   const [newChecklistItem, setNewChecklistItem] = useState('');
@@ -66,6 +93,7 @@ const KanbanCard = ({ card, index, moveCard, updateCard }) => {
     <div
       ref={(node) => drag(drop(node))}
       style={{
+        position: 'relative', // Needed for absolutely positioned delete button
         opacity: isDragging ? 0.5 : 1,
         padding: '1rem',
         margin: '0 0 1rem 0',
@@ -75,7 +103,25 @@ const KanbanCard = ({ card, index, moveCard, updateCard }) => {
       }}
     >
       <div style={{ fontWeight: 'bold' }}>{card.title}</div>
-      {/* Render checklist items using ChecklistItem */}
+      
+      {/* Delete Button */}
+      <button
+        onClick={() => onDeleteEvent(card.id)}
+        style={{
+          position: 'absolute',
+          top: '5px',
+          right: '5px',
+          background: 'transparent',
+          border: 'none',
+          color: 'red',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+        }}
+      >
+        X
+      </button>
+      
+      {/* Render checklist items */}
       {card.checklist && card.checklist.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {card.checklist.map((item) => (
@@ -89,6 +135,7 @@ const KanbanCard = ({ card, index, moveCard, updateCard }) => {
           ))}
         </ul>
       )}
+
       {/* Section for logging time manually */}
       <div style={{ marginTop: '0.5rem' }}>
         <input
@@ -111,18 +158,7 @@ const KanbanCard = ({ card, index, moveCard, updateCard }) => {
   );
 };
 
-const KanbanColumn = ({ column, cards, addCard, moveCard, moveCardToColumn, updateCard }) => {
-  // Use useDrop with a defined accept property.
-  const [, drop] = useDrop({
-    accept: ItemTypes.EVENT, // Make sure this matches the drag type
-    drop: (item) => {
-      if (item.column !== column) {
-        moveCardToColumn(item, column);
-        item.column = column;
-      }
-    },
-  });
-
+const KanbanColumn = ({ column, cards, addCard, moveCard, moveCardToColumn, updateCard, onDeleteEvent }) => {
   const [newCardTitle, setNewCardTitle] = useState('');
 
   const handleAddCard = () => {
@@ -133,15 +169,7 @@ const KanbanColumn = ({ column, cards, addCard, moveCard, moveCardToColumn, upda
   };
 
   return (
-    <div
-      ref={drop}
-      style={{
-        background: '#f0f0f0',
-        padding: '1rem',
-        width: '300px',
-        minHeight: '400px',
-      }}
-    >
+    <div style={{ background: '#f0f0f0', padding: '1rem', width: '300px', minHeight: '400px' }}>
       <h3>{column.toUpperCase()}</h3>
       {cards.map((card, index) => (
         <KanbanCard
@@ -150,6 +178,7 @@ const KanbanColumn = ({ column, cards, addCard, moveCard, moveCardToColumn, upda
           index={index}
           moveCard={moveCard}
           updateCard={updateCard}
+          onDeleteEvent={onDeleteEvent}  // Pass it down here
         />
       ))}
       <input
@@ -162,10 +191,10 @@ const KanbanColumn = ({ column, cards, addCard, moveCard, moveCardToColumn, upda
     </div>
   );
 };
-
-const KanbanBoard = ({ events, setEvents, updateCard }) => {
+const KanbanBoard = ({ events, setEvents, updateCard, onDeleteEvent }) => {
   const columns = ['todo', 'inProgress', 'done'];
 
+  // Functions to add/move cards (addCard, moveCard, moveCardToColumn) should be defined here.
   const addCard = (column, title) => {
     const newCard = {
       id: Date.now(),
@@ -182,9 +211,9 @@ const KanbanBoard = ({ events, setEvents, updateCard }) => {
   };
 
   const moveCard = (item, newIndex) => {
-    // Reorder cards within the same column.
     const columnCards = events.filter((e) => e.status === item.column);
     const cardToMove = columnCards.find((e) => e.id === item.id);
+    if (!cardToMove) return;
     const newColumnCards = columnCards.filter((e) => e.id !== item.id);
     newColumnCards.splice(newIndex, 0, cardToMove);
     const updatedEvents = events.filter((e) => e.status !== item.column).concat(newColumnCards);
@@ -209,6 +238,7 @@ const KanbanBoard = ({ events, setEvents, updateCard }) => {
           moveCard={moveCard}
           moveCardToColumn={moveCardToColumn}
           updateCard={updateCard}
+          onDeleteEvent={onDeleteEvent}  // Pass the deletion handler
         />
       ))}
     </div>
