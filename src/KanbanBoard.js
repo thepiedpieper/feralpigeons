@@ -192,7 +192,7 @@ const KanbanColumn = ({ column, cards, addCard, moveCard, moveCardToColumn, upda
   );
 };
 const KanbanBoard = ({ events, setEvents, updateCard, onDeleteEvent }) => {
-  const columns = ['todo', 'inProgress', 'done'];
+  const columns = ['Academics', 'Research', 'Hobbies', 'Recurring'];
 
   // Functions to add/move cards (addCard, moveCard, moveCardToColumn) should be defined here.
   const addCard = (column, title) => {

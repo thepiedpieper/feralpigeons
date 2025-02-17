@@ -43,6 +43,7 @@ const BoardAndCalendar = () => {
 
   useEffect(() => {
     localStorage.setItem('myEvents', JSON.stringify(events));
+    console.log('Events updated:', events)
   }, [events]);
 
   // Function to update a specific card/event
@@ -53,6 +54,7 @@ const BoardAndCalendar = () => {
 
   // Function to delete an event
   const handleDeleteEvent = (eventId) => {
+    console.log('Deleting event with id:', eventId);
     const updatedEvents = events.filter(e => e.id !== eventId);
     setEvents(updatedEvents);
   };
@@ -77,7 +79,7 @@ const BoardAndCalendar = () => {
         category: 'planner',
       };
       setEvents([...events, newEvent]);
-      // Optionally remove the task from its originating card
+      
     }
   };
 
@@ -112,14 +114,14 @@ const BoardAndCalendar = () => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div style={{ height: '100vh' }}>
-        <Dashboard events={events} onDeleteEvent={handleDeleteEvent} />
+        <Dashboard events={events} onDeleteEvent={handleDeleteEvent} onUpdateEvent={updateCard} />
         <Split
-          split="vertical" 
+          split="horizontal" 
           minSize={300} 
           defaultSize="50%"
           style={{ height: 'calc(100vh - 150px)' }}
         >
-          <div style={{ padding: '1rem', overflow: 'auto' }}>
+          <div style={{ width: '100%', padding: '1rem', overflow: 'auto' }}>
             <MyCalendar
               events={events}
               setEvents={setEvents}
@@ -130,7 +132,7 @@ const BoardAndCalendar = () => {
               onDeleteEvent={handleDeleteEvent}  // Pass deletion handler to calendar events
             />
           </div>
-          <div style={{ padding: '1rem', overflow: 'auto' }}>
+          <div style={{ width: '100%', padding: '1rem', overflow: 'auto' }}>
             <KanbanBoard 
               events={events} 
               setEvents={setEvents} 
