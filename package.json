@@ -15,7 +15,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "react-split-pane": "^0.1.92",
+    "react-split": "^2.0.14",
     "styled-components": "^6.1.15",
     "web-vitals": "^2.1.4"
   },

@@ -4,7 +4,7 @@ import KanbanBoard from './KanbanBoard';
 import Dashboard from './Dashboard';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import SplitPane from 'react-split-pane';
+import Split from 'react-split';
 
 const initialEvents = [
   {
