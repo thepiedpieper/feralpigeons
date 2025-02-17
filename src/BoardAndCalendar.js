@@ -113,7 +113,7 @@ const BoardAndCalendar = () => {
     <DndProvider backend={HTML5Backend}>
       <div style={{ height: '100vh' }}>
         <Dashboard events={events} onDeleteEvent={handleDeleteEvent} />
-        <SplitPane 
+        <Split
           split="vertical" 
           minSize={300} 
           defaultSize="50%"
@@ -138,7 +138,7 @@ const BoardAndCalendar = () => {
               onDeleteEvent={handleDeleteEvent}  // Pass deletion handler to Kanban board cards
             />
           </div>
-        </SplitPane>
+        </Split>
       </div>
     </DndProvider>
   );
